@@ -12,9 +12,7 @@ function test_pack()
 end
 -- test_pack()
 
-
 -- test service.new
-
 --[[
 local addr1 = service.new {
     source = "@service/hello.lua",
@@ -55,8 +53,22 @@ service._send_message(
     msg,
     sz
 )
-
 ]]
+
+local MESSAGE_REQUEST = 1
+local boot_id = service.spawn { source = "@service/boot.lua", config = {} }
+print("boot_id", boot_id)
+local msg, sz = service.pack ( "boot" )
+service._send_message(
+    service.pool,
+    0,
+    boot_id,
+    0,
+    MESSAGE_REQUEST,
+    msg,
+    sz
+)
+
 
 uv.new_signal():start("sigint", function(signal)
         print("on sigint, exit")

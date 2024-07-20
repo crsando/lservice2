@@ -37,8 +37,13 @@ static int lservice_start(lua_State *L) {
 
 static int lservice_get_id(lua_State *L) {
     service_t * s = lua_touserdata(L, 1);
-    service_id id = s->id;
-    lua_pushinteger(L, id);
+    lua_pushinteger(L, s->id);
+    return 1;
+}
+
+static int lservice_get_pool(lua_State *L) {
+    service_t * s = lua_touserdata(L, 1);
+    lua_pushlightuserdata(L, s->pool);
     return 1;
 }
 
@@ -126,6 +131,7 @@ LUAMOD_API int luaopen_lservice2_c(lua_State *L) {
 	luaL_Reg l[] = {
         // pool
 		{ "_pool_new", lservice_pool_new },
+		{ "_get_pool", lservice_get_pool },
 
         // service
 		{ "_new", lservice_new },

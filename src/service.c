@@ -17,7 +17,7 @@ service_pool_t * service_pool_new() {
 }
 
 service_t * service_pool_get_service(service_pool_t * pool, service_id id) {
-    assert(id > 0 && id < MAX_SERVICES);
+    assert(id >= 0 && id < MAX_SERVICES);
     return pool->services[id];
 }
 

@@ -69,7 +69,7 @@ end
 function service.spawn(t)
     local addr = service.new(t)
     service.start(addr)
-    return addr 
+    return service.get_id(addr) 
 end
 
 -- get current service_id or get_id by addr
@@ -78,9 +78,12 @@ function service.get_id(addr)
     return service._get_id(addr)
 end
 
+service.get_pool = service._get_pool
+
 function service.input(s, config)
     service.self = s
     service.config = service.unpack_remove(config)
+    service.pool = service.get_pool(s)
 
     print("service", service.get_id(), "with config", inspect(service.config) )
 end
@@ -153,7 +156,7 @@ local function send_response(...)
 
 	if session > 0 then
 		local from = session_coroutine_address[running_thread]
-		service.send_message(from, session, MESSAGE_RESPONSE, service.pack(...))
+		service._send_message(service.pool, service.get_id(), from, session, MESSAGE_RESPONSE, service.pack(...))
 	end
 
 	-- End session
@@ -178,11 +181,12 @@ end
 
 function service.call(id, ...)
 	service._send_message(
+        service.pool,
         service.get_id(),
         id, 
         session_id, 
         MESSAGE_REQUEST, 
-        ltask.pack(...)
+        service.pack(...)
     ) 
 
 	session_coroutine_suspend_lookup[session_id] = running_thread
@@ -190,10 +194,10 @@ function service.call(id, ...)
 
 	local type, session, msg, sz = yield_session()
 	if type == MESSAGE_RESPONSE then
-		return ltask.unpack_remove(msg, sz)
+		return service.unpack_remove(msg, sz)
 	else
 		-- type == MESSAGE_ERROR
-		rethrow_error(2, ltask.unpack_remove(msg, sz))
+		rethrow_error(2, service.unpack_remove(msg, sz))
 	end
 end
 
@@ -222,6 +226,7 @@ function service.dispatch(request_handler)
             print(resume_session(co, type, msg, sz))
         -- on response, resume the previous session
         elseif session then
+            print("suspend", inspect(session_coroutine_suspend_lookup))
             local co = session_coroutine_suspend_lookup[session]
             if co == nil then
                 print("Unknown response session : ", session)

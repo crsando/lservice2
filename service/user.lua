@@ -5,6 +5,7 @@ service.input(...)
 local S = {}
 
 function S.ping()
+    print("pool", service.pool)
     print("PONG")
     return "PONG"
 end
