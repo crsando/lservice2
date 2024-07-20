@@ -73,19 +73,43 @@ function service.spawn(t)
 end
 
 -- get current service_id or get_id by addr
+local CURRENT_SERVICE_ID = nil
 function service.get_id(addr)
-    addr = addr or service.self
-    return service._get_id(addr)
+    if service.self == nil then return 0 end
+    if not addr then 
+        CURRENT_SERVICE_ID = CURRENT_SERVICE_ID or service._get_id(service.self)
+        return CURRENT_SERVICE_ID
+    else 
+        return service._get_id(addr)
+    end
 end
 
-service.get_pool = service._get_pool
+function service.get_cond(addr) 
+    if service.self == nil then return nil end
+    addr = addr or service.self
+    return service._get_cond(addr)
+end
+
+function service.get_pool(addr) 
+    if service.self == nil then return nil end
+    addr = addr or service.self
+    return service._get_pool(addr)
+end
 
 function service.input(s, config)
-    service.self = s
-    service.config = service.unpack_remove(config)
-    service.pool = service.get_pool(s)
-
-    print("service", service.get_id(), "with config", inspect(service.config) )
+    print("service.input", s, config)
+    if s then
+        service.self = s
+        service.pool = service.get_pool(s)
+        service.config = service.unpack_remove(config)
+        print("service", service.get_id(), "with config", inspect(service.config) )
+    else 
+        print("No input, running in standalone mode")
+        service.self = nil
+        service.pool = nil
+        service.config = {}
+    end
+    print("service.input end", s, config)
 end
 
 function service.send_message(to, session, type, msg, sz)
@@ -127,6 +151,8 @@ local function resume_session(co, ...)
     session_coroutine_response[co] = nil
 end
 
+service.resume_session = resume_session
+
 local coroutine_pool = setmetatable({}, { __mode = "kv" })
 
 -- Mingda Qiu
@@ -145,6 +171,7 @@ local function new_thread(f)
 end
 
 local function new_session(f, from, session)
+    print("new_session", f, from, session)
 	local co = new_thread(f)
 	session_coroutine_address[co] = from
 	session_coroutine_response[co] = session
@@ -153,6 +180,7 @@ end
 
 local function send_response(...)
 	local session = session_coroutine_response[running_thread]
+    print("send_response", session, inspect{...})
 
 	if session > 0 then
 		local from = session_coroutine_address[running_thread]
@@ -166,33 +194,52 @@ end
 
 -- api
 
-local function dispatch_wakeup()
-    print("dispatch_wakeup")
-	while #wakeup_queue > 0 do
-		local s = table.remove(wakeup_queue, 1)
-		resume_session(unpack(s))
-	end
-end
+-- local function dispatch_wakeup()
+--     print("dispatch_wakeup", inspect(wakeup_queue))
+-- 	while #wakeup_queue > 0 do
+-- 		local s = table.remove(wakeup_queue, 1)
+-- 		resume_session(unpack(s))
+-- 	end
+-- end
 
 -- function service.fork(func, ...)
 -- 	local co = new_thread(func)
 -- 	wakeup_queue[#wakeup_queue+1] = {co, ...}
 -- end
 
-function service.call(id, ...)
-	service._send_message(
+
+function service.send(id, ...)
+    return service._send_message(
         service.pool,
-        service.get_id(),
-        id, 
-        session_id, 
+        service.get_id(), -- from
+        id,  -- to
+        0,  --session_id = 0
         MESSAGE_REQUEST, 
         service.pack(...)
-    ) 
+    )
+end
+
+function service.loopback(...)
+    return service.send(service.get_id(), ...)
+end
+
+function service.call(id, ...)
+    print("begin service.call:", id, session_id + 1)
+    service._send_message(
+        service.pool,
+        service.get_id(), -- from
+        id,  -- to
+        session_id,
+        MESSAGE_REQUEST, 
+        service.pack(...)
+    )
 
 	session_coroutine_suspend_lookup[session_id] = running_thread
 	session_id = session_id + 1
 
+    print("begin service.call yield_session:", id)
 	local type, session, msg, sz = yield_session()
+    print("service.call get response from", from)
 	if type == MESSAGE_RESPONSE then
 		return service.unpack_remove(msg, sz)
 	else
@@ -202,7 +249,11 @@ function service.call(id, ...)
 end
 
 
+
 function service.dispatch(request_handler)
+    -- if in standalone mode
+    if not service.self then return nil end
+
     local function request(command, ...)
         print("Begin request", inspect(command))
         local s = request_handler[command]
@@ -223,7 +274,7 @@ function service.dispatch(request_handler)
             local co = new_session(function (type, msg, sz)
                     request(service.unpack_remove(msg, sz))
                 end, from, session)
-            print(resume_session(co, type, msg, sz))
+            print("resume_session", resume_session(co, type, msg, sz))
         -- on response, resume the previous session
         elseif session then
             print("suspend", inspect(session_coroutine_suspend_lookup))
@@ -239,8 +290,13 @@ function service.dispatch(request_handler)
             end
         else
             -- on idle, do nothing here
+            -- print("on_idle")
+            if service.on_idle then 
+                service.on_idle() -- attention, this is not a coroutine
+            end
         end
-        dispatch_wakeup()
+
+        -- dispatch_wakeup()
         if quit then
             -- do something cleaning here
 

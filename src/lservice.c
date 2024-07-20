@@ -47,6 +47,19 @@ static int lservice_get_pool(lua_State *L) {
     return 1;
 }
 
+static int lservice_get_cond(lua_State *L) {
+    service_t * s = lua_touserdata(L, 1);
+    lua_pushlightuserdata(L, s->c);
+    log_info("lservice_get_cond %x", s->c);
+    return 1;
+}
+
+static int lservice_get_pthread_cond_t(lua_State *L) {
+    service_t * s = lua_touserdata(L, 1);
+    lua_pushlightuserdata(L, &(s->c->c));
+    return 1;
+}
+
 // message related utilities
 
 // from, to, session, type, msg, sz
@@ -104,13 +117,18 @@ static int lservice_recv_message(lua_State *L) {
 
     message_t * msg = service_recv(s, blocking);
 
-    lua_pushinteger(L, msg->from);
-    lua_pushinteger(L, msg->to);
-    lua_pushinteger(L, msg->session);
-    lua_pushinteger(L, msg->type);
-    lua_pushlightuserdata(L, msg->msg);
-    lua_pushinteger(L, msg->sz);
-    return 6;
+    if(msg) {
+        lua_pushinteger(L, msg->from);
+        lua_pushinteger(L, msg->to);
+        lua_pushinteger(L, msg->session);
+        lua_pushinteger(L, msg->type);
+        lua_pushlightuserdata(L, msg->msg);
+        lua_pushinteger(L, msg->sz);
+        return 6;
+    }
+    else {
+        return 0;
+    }
 }
 
 static int
@@ -132,6 +150,8 @@ LUAMOD_API int luaopen_lservice2_c(lua_State *L) {
         // pool
 		{ "_pool_new", lservice_pool_new },
 		{ "_get_pool", lservice_get_pool },
+		{ "_get_cond", lservice_get_cond },
+		{ "_get_pthread_cond_t", lservice_get_pthread_cond_t },
 
         // service
 		{ "_new", lservice_new },

@@ -47,7 +47,6 @@ struct service {
     struct queue * q;
     struct cond * c;
 
-
     lua_State * L;
     // int lua_func_ref;
 };

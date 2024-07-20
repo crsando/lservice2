@@ -159,16 +159,23 @@ int service_send(service_t * s, message_t * msg) {
 }
 
 message_t * service_recv(service_t * s, bool blocking) {
+    log_debug("service_recv begin");
     message_t * msg;
     if(blocking) {
         cond_wait_begin(s->c);
-        while( queue_length(s->q) == 0 )
+
+        if( queue_length(s->q) == 0 )
             cond_wait(s->c);
-        msg = queue_pop_ptr(s->q);
+        if ( queue_length(s->q) > 0)
+            msg = queue_pop_ptr(s->q);
+        else 
+            msg = NULL;
         cond_wait_end(s->c);
     }
     else {
+        cond_wait_begin(s->c);
         msg = queue_pop_ptr(s->q);
+        cond_wait_end(s->c);
     }
     return msg;
 }
