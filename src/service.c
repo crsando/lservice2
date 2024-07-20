@@ -11,18 +11,24 @@ service_pool_t * service_pool_new() {
     service_pool_t * pool = NULL;
     pool = (service_pool_t *)malloc(sizeof(service_pool_t));
     memset(pool, 0, sizeof(service_pool_t));
+    pool->id = 0;
 	pthread_mutex_init(&pool->lock, NULL);
     return pool;
 }
 
-service_t * service_pool_query_service(service_pool_t * pool, const char * key) {
-    service_t * s = NULL;
-    pthread_mutex_lock(&pool->lock);
-    registry_t * r = registry_get(&pool->services, key);
-    s = (service_t*)( r ? r->ptr : NULL );
-    pthread_mutex_unlock(&pool->lock);
-    return s;
+service_t * service_pool_get_service(service_pool_t * pool, service_id id) {
+    assert(id > 0 && id < MAX_SERVICES);
+    return pool->services[id];
 }
+
+// service_t * service_pool_query_service(service_pool_t * pool, const char * key) {
+//     service_t * s = NULL;
+//     pthread_mutex_lock(&pool->lock);
+//     registry_t * r = registry_get(&pool->services, key);
+//     s = (service_t*)( r ? r->ptr : NULL );
+//     pthread_mutex_unlock(&pool->lock);
+//     return s;
+// }
 
 void * service_pool_registry(service_pool_t * pool, const char * key, void * ptr) {
     if(ptr) {
@@ -92,19 +98,30 @@ int service_init_lua(service_t * s) {
 }
 
 service_t * service_new(service_pool_t * pool, const char * name, const char * code, void * config) {
+    int err = 0;
     service_t * s;
 
     s = (service_t *)malloc(sizeof(service_t));
     memset(s, 0, sizeof(service_t));
 
     if(pool) {
-        s->pool = pool;
-        assert(name && (strlen(name) <= 30));
-        strcpy(s->name, name);
-
         pthread_mutex_lock(&pool->lock);
-        registry_put(&pool->services, name, s);
+        s->pool = pool;
+        s->id = pool->id ++; // assign service_id
+
+        log_info("service_new, assign id %d", s->id);
+
+        if(s->id > MAX_SERVICES)
+            err = 1; // too many services
+        else 
+            pool->services[s->id] = s; // add service pointer to the list
+
         pthread_mutex_unlock(&pool->lock);
+    }
+
+    if(err) {
+        free(s);
+        return NULL;
     }
 
     assert(code != NULL);
@@ -121,12 +138,10 @@ service_t * service_new(service_pool_t * pool, const char * name, const char * c
 
 // entry fro pthread_create
 void * service_routine_wrap(void * arg) {
-    void * msg;
     service_t * s = (service_t *)arg;
-
     service_init_lua(s);
-
     assert(s->L != NULL);
+    return NULL;
 }
 
 int service_start(service_t * s) {

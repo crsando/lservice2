@@ -1,24 +1,11 @@
 local inspect = require "inspect"
-local seri = require "lseri"
-local service = require "lservice"
-local ffi = service.ffi
+local service = require "lservice2"
 
-local name, config, pool = service.input(seri.unpack_remove, ...)
+service.input(...)
 
-local common = ffi.cast("int *", pool:registry "common")
+while true do 
+    local from, to, session, type, msg, sz =  service._recv_message(service.self, true) 
 
-print("init", name, inspect(config))
-print(common[0], common[5])
-
-local i = 1
-
-function hello(msg)
-    i = i + 1
-    print(ffi.C.pthread_self(), "from service hello", i, msg)
-    print("inside", service.thread_id(), "counter", i)
-
-    local data = seri.unpack_remove(msg)
-    print(inspect(data))
+    local body = service.unpack_remove(msg)
+    print("recv", from, to, inspect(body))
 end
-
-return hello

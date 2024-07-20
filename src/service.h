@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h> -- bool type
+#include <stdbool.h> // bool type
 
 #include <lua.h>
 #include <lualib.h>
@@ -12,15 +12,24 @@
 #include "cond.h"
 #include "message.h"
 
-typedef unsigned long long service_id;
+typedef unsigned int service_id;
 
-typedef struct {
+#define MAX_SERVICES (32)
+
+struct service;
+struct service_pool;
+typedef struct service service_t;
+typedef struct service_pool service_pool_t;
+
+struct service_pool {
     pthread_mutex_t lock;
-    registry_t * services;
+    service_t * services[MAX_SERVICES+1];
+    service_id id; // next id to assign
+    // registry_t * services;
     registry_t * variables;
-} service_pool_t;
+};
 
-typedef struct {
+struct service {
     service_pool_t * pool;
 
     // service id and name
@@ -41,11 +50,12 @@ typedef struct {
 
     lua_State * L;
     // int lua_func_ref;
-} service_t;
+};
 
 service_pool_t * service_pool_new();
 void * service_pool_registry(service_pool_t * pool, const char * key, void * ptr);
-service_t * service_pool_query_service(service_pool_t * pool, const char * key);
+// service_t * service_pool_query_service(service_pool_t * pool, const char * key);
+service_t * service_pool_get_service(service_pool_t * pool, service_id id);
 
 // service_t * service_new(service_pool_t * pool, const char * name);
 service_t * service_new(service_pool_t * pool, const char * name, const char * code, void * config);

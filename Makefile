@@ -1,36 +1,32 @@
 CFLAGS=-g -Wall
 # CFLAGS+=-DDEBUGLOG
 
+PREFIX=/usr/local/
+
 # LUAINC?=-I/usr/local/include
 LUAINC?=-I/usr/local/include/luajit-2.1
 SHARED=--shared -fPIC
 SO=so
 LIBS=-lpthread -lluajit-5.1
 
-all : liblservice.$(SO) lua-seri.so
+all : lservice2_c.so
 
 SRCS=\
+ src/lservice.c \
  src/service.c \
  src/queue.c \
  src/registry.c \
  src/util.c \
+ src/message.c \
+ src/lua-seri.c \
  src/log.c
 
-liblservice.$(SO) : $(SRCS)
+lservice2_c.so : $(SRCS)
 	$(CC) $(CFLAGS) $(SHARED) $(LUAINC) -Isrc -o $@ $^ $(LIBS)
 
 install:
-	cp liblservice.so /usr/local/lib
-	cp lua/lservice.lua /usr/local/share/lua/5.1/
-
-test: test.c
-	$(CC) $(CFLAGS) $(LUAINC) test.c -L. -lluajit-5.1 -llservice -Isrc -o test 
-
-test2: test2.c
-	$(CC) $(CFLAGS) $(LUAINC) test2.c -L. -lluajit-5.1 -llservice -Isrc -o test2 
-
-test_registry: test_registry.c
-	$(CC) $(CFLAGS) $(LUAINC) test_registry.c -L. -lluajit-5.1 -llservice -Isrc -o test_registry
+	cp lservice2_c.so $(PREFIX)/lib/lua/5.1/
+	cp lua/lservice2.lua $(PREFIX)/share/lua/5.1/
 
 clean :
 	rm -rf *.$(SO)

@@ -2,8 +2,8 @@
 #define ltask_message_h
 
 #include <stddef.h>
-#include "service.h"
 
+typedef unsigned int service_id;
 typedef unsigned int session_t;
 
 #define MESSAGE_SYSTEM 0
