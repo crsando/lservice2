@@ -3,17 +3,6 @@ local service = require "lservice2"
 local uv = require "luv"
 
 local root_id = service.spawn { source = "@service/root.lua", config = {} }
-local msg, sz = service.pack ( "boot" )
--- service._send_message(
---     service.pool,
---     0,
---     root_id,
---     0,
---     1,
---     msg,
---     sz
--- )
-
 service.send(root_id, "boot")
 
 

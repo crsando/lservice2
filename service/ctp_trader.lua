@@ -3,8 +3,6 @@ local service = require "lservice2"
 service.input(...)
 local config = service.config
 
-local is_settled = false
-
 local R = {} -- handle trader response
 local S = {} -- handle service request/response
 
@@ -90,11 +88,7 @@ end
 
 -- trader logic
 
--- function R.OnRspSettlementInfoConfirm(rsp)
---     print("handle", inspect(rsp))
---     is_settled = true
--- end
-
+-- 
 
 -- service request / response
 
@@ -127,6 +121,12 @@ end
 
 function S.start()
     return true
+end
+
+function S.quit()
+    print("trader is quitting")
+    service.call(0, "notify", service.get_id(), "quit")
+    service.quit()
 end
 
 service.dispatch(S)

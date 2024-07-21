@@ -45,13 +45,17 @@ local function boot()
     local sub_lst = filter_instruments(slice(rst, "InstrumentID"))
     print(inspect(sub_lst))
 
-    local rst = assert(service.call(collector_id, "start", sub_lst))
+    --
+    local symbols = { "IF2409" }
+    local rst = assert(service.call(collector_id, "start", symbols))
 
     -- local rst = service.call(trader_id, "query_account")
     -- print("boot, recv response from trader", inspect(rst))
 
     -- local rst = service.call(trader_id, "query_instrument")
     -- print("boot, recv response from trader", inspect(rst))
+
+     service.call(trader_id, "quit")
 end
 
 local S = {}
@@ -62,6 +66,10 @@ end
 
 function S.tick(data)
     print("root get tick data", inspect(data))
+end
+
+function S.notify(from, info)
+    print("root get notified from ", from, "with msg: ", info)
 end
 
 service.dispatch(S)

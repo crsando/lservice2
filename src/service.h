@@ -59,6 +59,8 @@ service_t * service_pool_get_service(service_pool_t * pool, service_id id);
 // service_t * service_new(service_pool_t * pool, const char * name);
 service_t * service_new(service_pool_t * pool, const char * name, const char * code, void * config);
 
+int service_join(service_t * s);
+
 // int service_init_lua(service_t * s, const char * code, void * config);
 int service_init_lua(service_t * s);
 int service_start(service_t * s);

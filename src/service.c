@@ -55,6 +55,12 @@ void * service_pool_registry(service_pool_t * pool, const char * key, void * ptr
     }
 }
 
+int service_join(service_t * s) {
+    void * ret = NULL;
+    int err = pthread_join(s->thread, &ret);
+    return err;
+}
+
 int service_init_lua(service_t * s) {
     lua_State * L;
 	L = luaL_newstate();
@@ -140,7 +146,8 @@ service_t * service_new(service_pool_t * pool, const char * name, const char * c
 void * service_routine_wrap(void * arg) {
     service_t * s = (service_t *)arg;
     service_init_lua(s);
-    assert(s->L != NULL);
+    log_debug("service_routine_wrap : service exited", s->id);
+
     return NULL;
 }
 

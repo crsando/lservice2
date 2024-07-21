@@ -35,6 +35,13 @@ static int lservice_start(lua_State *L) {
     return 1;
 }
 
+static int lservice_join(lua_State *L) {
+    service_t * s = lua_touserdata(L, 1);
+    int ret = service_join(s);
+    lua_pushinteger(L, ret);
+    return 1;
+}
+
 static int lservice_get_id(lua_State *L) {
     service_t * s = lua_touserdata(L, 1);
     lua_pushinteger(L, s->id);
@@ -50,13 +57,15 @@ static int lservice_get_pool(lua_State *L) {
 static int lservice_get_cond(lua_State *L) {
     service_t * s = lua_touserdata(L, 1);
     lua_pushlightuserdata(L, s->c);
-    log_info("lservice_get_cond %x", s->c);
     return 1;
 }
 
-static int lservice_get_pthread_cond_t(lua_State *L) {
+static int lservice_get_addr(lua_State *L) {
     service_t * s = lua_touserdata(L, 1);
-    lua_pushlightuserdata(L, &(s->c->c));
+    int service_id = luaL_checkinteger(L, 2);
+    log_debug("lservice_get_addr %x %d", s, service_id);
+    service_t * ret = service_pool_get_service(s->pool, service_id);
+    lua_pushlightuserdata(L, ret);
     return 1;
 }
 
@@ -151,11 +160,12 @@ LUAMOD_API int luaopen_lservice2_c(lua_State *L) {
 		{ "_pool_new", lservice_pool_new },
 		{ "_get_pool", lservice_get_pool },
 		{ "_get_cond", lservice_get_cond },
-		{ "_get_pthread_cond_t", lservice_get_pthread_cond_t },
+		{ "_get_addr", lservice_get_addr },
 
         // service
 		{ "_new", lservice_new },
 		{ "_start", lservice_start },
+		{ "_join", lservice_join },
 		{ "_get_id", lservice_get_id },
 		{ "_send_message", lservice_send_message },
 		{ "_recv_message", lservice_recv_message },

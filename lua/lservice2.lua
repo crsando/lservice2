@@ -10,6 +10,8 @@ local inspect = require "inspect"
 
 -- constants
 
+local ROOT_ID = 0
+
 local MESSAGE_SYSTEM = 0
 local MESSAGE_REQUEST = 1
 local MESSAGE_RESPONSE = 2
@@ -37,7 +39,7 @@ function service.new(t)
         if t.pool then 
             service.pool = t.pool
         else 
-            print("create new pool")
+            -- print("create new pool")
             service.pool = service._pool_new()
         end
     end
@@ -63,7 +65,15 @@ function service.new(t)
 end
 
 function service.start(addr)
+    -- if id is given, it is automatically converted into addr
+    addr = service.get_addr(addr)
     return service._start(addr)
+end
+
+function service.join(addr) 
+    -- if id is given, it is automatically converted into addr
+    addr = service.get_addr(addr)
+    return service._join(addr)
 end
 
 function service.spawn(t)
@@ -96,20 +106,29 @@ function service.get_pool(addr)
     return service._get_pool(addr)
 end
 
+function service.get_addr(id)
+    print('get_addr', id, type(id))
+    if not id then return service.self end -- if input is lightuserdata
+    if type(id) ~= "number" then return id end
+    local rst = service._get_addr(service.self, id)
+    io.stderr:write("get_addr", rst)
+    return rst
+end
+
 function service.input(s, config)
-    print("service.input", s, config)
+    -- print("service.input", s, config)
     if s then
         service.self = s
         service.pool = service.get_pool(s)
         service.config = service.unpack_remove(config)
-        print("service", service.get_id(), "with config", inspect(service.config) )
+        -- print("service", service.get_id(), "with config", inspect(service.config) )
     else 
         print("No input, running in standalone mode")
         service.self = nil
         service.pool = nil
         service.config = {}
     end
-    print("service.input end", s, config)
+    -- print("service.input end", s, config)
 end
 
 function service.send_message(to, session, type, msg, sz)
@@ -171,7 +190,7 @@ local function new_thread(f)
 end
 
 local function new_session(f, from, session)
-    print("new_session", f, from, session)
+    -- print("new_session", f, from, session)
 	local co = new_thread(f)
 	session_coroutine_address[co] = from
 	session_coroutine_response[co] = session
@@ -224,7 +243,7 @@ function service.loopback(...)
 end
 
 function service.call(id, ...)
-    print("begin service.call:", id, session_id + 1)
+    -- print("begin service.call:", id, session_id + 1)
     service._send_message(
         service.pool,
         service.get_id(), -- from
@@ -237,9 +256,9 @@ function service.call(id, ...)
 	session_coroutine_suspend_lookup[session_id] = running_thread
 	session_id = session_id + 1
 
-    print("begin service.call yield_session:", id)
+    -- print("begin service.call yield_session:", id)
 	local type, session, msg, sz = yield_session()
-    print("service.call get response from")
+    -- print("service.call get response from")
 	if type == MESSAGE_RESPONSE then
 		return service.unpack_remove(msg, sz)
 	else
@@ -250,6 +269,11 @@ end
 
 function service.get_session()
     return running_thread
+end
+
+local quit = false
+function service.quit()
+    quit = true
 end
 
 
@@ -277,7 +301,7 @@ function service.dispatch(request_handler)
             local co = new_session(function (type, msg, sz)
                     request(service.unpack_remove(msg, sz))
                 end, from, session)
-            print("resume_session", resume_session(co, type, msg, sz))
+            resume_session(co, type, msg, sz)
         -- on response, resume the previous session
         elseif session then
             -- print("suspend", inspect(session_coroutine_suspend_lookup))
@@ -301,9 +325,6 @@ function service.dispatch(request_handler)
 
         -- dispatch_wakeup()
         if quit then
-            -- do something cleaning here
-
-            -- break the while mainloop, hence effectively end the thread
             break
         end
 	end -- end while
