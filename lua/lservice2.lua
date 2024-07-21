@@ -159,10 +159,10 @@ local coroutine_pool = setmetatable({}, { __mode = "kv" })
 -- 原始的new_thread没看懂, 尝试换一个写法试试
 local function new_thread(f)
     local co = coroutine.create(function (...)
-            print(">>> coroutine begin", f, inspect{...})
+            -- print(">>> coroutine begin", f, inspect{...})
             local ok, err = pcall(f, ...)
             if not ok then print("ERROR", err) end
-            print(">>> coroutine end")
+            -- print(">>> coroutine end")
         end)
     
     table.insert(coroutine_pool, co)
@@ -180,7 +180,7 @@ end
 
 local function send_response(...)
 	local session = session_coroutine_response[running_thread]
-    print("send_response", session, inspect{...})
+    -- print("send_response", session, inspect{...})
 
 	if session > 0 then
 		local from = session_coroutine_address[running_thread]
@@ -239,7 +239,7 @@ function service.call(id, ...)
 
     print("begin service.call yield_session:", id)
 	local type, session, msg, sz = yield_session()
-    print("service.call get response from", from)
+    print("service.call get response from")
 	if type == MESSAGE_RESPONSE then
 		return service.unpack_remove(msg, sz)
 	else
@@ -248,6 +248,9 @@ function service.call(id, ...)
 	end
 end
 
+function service.get_session()
+    return running_thread
+end
 
 
 function service.dispatch(request_handler)
@@ -255,20 +258,20 @@ function service.dispatch(request_handler)
     if not service.self then return nil end
 
     local function request(command, ...)
-        print("Begin request", inspect(command))
+        -- print("Begin request", inspect(command))
         local s = request_handler[command]
         if not s then
             error("Unknown request message : " .. command)
             return
         end
         send_response(s(...))
-        print("End request", command)
+        -- print("End request", command)
     end
 
     -- main loop
 	while true do
         local from, to, session, type, msg, sz = service.recv_message(true) -- blocking
-        print("recv_message", from, to, session, type, msg, sz)
+        -- print("recv_message", from, to, session, type, msg, sz)
         -- if a request is received
         if type == MESSAGE_REQUEST then 
             local co = new_session(function (type, msg, sz)
@@ -277,7 +280,7 @@ function service.dispatch(request_handler)
             print("resume_session", resume_session(co, type, msg, sz))
         -- on response, resume the previous session
         elseif session then
-            print("suspend", inspect(session_coroutine_suspend_lookup))
+            -- print("suspend", inspect(session_coroutine_suspend_lookup))
             local co = session_coroutine_suspend_lookup[session]
             if co == nil then
                 print("Unknown response session : ", session)

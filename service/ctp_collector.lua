@@ -22,8 +22,8 @@ print("service cond", service.get_cond())
 local collector = ctp.new_collector(server)
     :cond( service.get_cond() )
     -- :hook(function(md, msg) service.loopback("tick") end)
-    :subscribe( { symbol } )
-    :start()
+    -- :subscribe( { symbol } )
+    -- :start()
 
 --
 
@@ -52,6 +52,13 @@ end
 function S.echo(msg)
     print("echo", msg)
     return msg
+end
+
+function S.start(symbol_list)
+    assert(type(symbol_list) == "table")
+    collector:subscribe( symbol_list )
+    collector:start()
+    return true
 end
 
 
