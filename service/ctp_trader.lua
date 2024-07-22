@@ -3,6 +3,14 @@ local service = require "lservice2"
 service.input(...)
 local config = service.config
 
+local function slice(t, k)
+    local o = {}
+    for i, e in ipairs(t) do 
+        o[i] = e[k]
+    end
+    return o
+end
+
 local R = {} -- handle trader response
 local S = {} -- handle service request/response
 
@@ -103,29 +111,18 @@ end
 function S.query_account()
     local req_id = trader:query_account()
     local rst = wait_trader_request(req_id)
-    print("query_account, rst", inspect(rst))
-    print("query_account, avail", rst[1].field.Available)
-    return rst[1].field.Available
+    return rst[1].field
 end
 
 function S.query_position()
     local T = wait_trader_request(trader:query_position())
-    print("positions", inspect(T)) 
-    return T
+    return slice(T,"field")
 end
 
 function S.query_instrument(exchange_id)
     local running_thread = service.get_session()
-    -- print("begin query instrument", running_thread)
-    -- assert(type(exchange_id) == "string")
-    local T = wait_trader_request(trader:query_instrument("SHFE"))
-
-    -- print("query_instrument", inspect(T))
-    local rst = {}
-    for _, e in ipairs(T) do 
-        table.insert(rst, e.field)
-    end
-    return rst
+    local T = wait_trader_request(trader:query_instrument(exchange_id or ""))
+    return slice(T, "field")
 end
 
 function S.start()

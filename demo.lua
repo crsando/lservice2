@@ -5,7 +5,7 @@ local service = require "lservice2"
 local uv = require "luv"
 
 -- local pass = require "pass"
-local accounts = require "account"
+local accounts = require "accounts"
 
 local root_id = service.spawn { source = "@service/root.lua", config = { accounts = accounts } }
 service.send(root_id, "boot")
