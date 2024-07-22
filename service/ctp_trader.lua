@@ -13,24 +13,10 @@ ctp.log_set_level("LOG_DEBUG")
 
 -- local server = config.server or ctp.servers.trader["openctp-7x24"] 
 
-local server = {
-            front_addr = "tcp://180.169.75.18:61205",
-            broker = "7090", 
-            user = "85194065", 
-            pass = nil, 
-            app_id = "client_tara_060315", 
-            auth_code = '20221011TARA0001',
-        }
+local server = config.account or ctp.servers.trader["openctp-7x24"] 
 
-server.pass = server.pass or config.pass[server.user]
-
-if not server.pass then 
-    io.write("user: ", server.user, "\n")
-    io.write("password: ")
-    server.pass = io.read("*line")
-end
-
--- server.pass = assert(server.pass or config.pass)
+assert(server)
+print("trader account", inspect(server))
 
 local trader = ctp.new_trader(server)
     :cond( service.get_cond() )

@@ -2,6 +2,7 @@ local inspect = require "inspect"
 local service = require "lservice2"
 
 service.input(...)
+local config = service.config
 
 local function slice(t, k)
     local o = {}
@@ -25,7 +26,7 @@ local function boot()
     -- local id1 = service.spawn { source = "@service/echo.lua", config = {} }
     -- local id2 = service.spawn { source = "@service/user.lua", config = {} }
     -- local collector_id = service.spawn { source = "@service/ctp_collector.lua", config = {} }
-    local trader_id = service.spawn { source = "@service/ctp_trader.lua", config = { pass = service.config.pass } }
+    local trader_id = service.spawn { source = "@service/ctp_trader.lua", config = { account = config.accounts.trader["gtja-1"] } }
 
     -- print(id1, id2, trader_id)
 
