@@ -11,9 +11,26 @@ local ffi = ctp.ffi
 
 ctp.log_set_level("LOG_DEBUG")
 
-local server = ctp.servers.trader["openctp-7x24"] 
+-- local server = config.server or ctp.servers.trader["openctp-7x24"] 
 
-server.pass = assert(server.pass or config.pass)
+local server = {
+            front_addr = "tcp://180.169.75.18:61205",
+            broker = "7090", 
+            user = "85194065", 
+            pass = nil, 
+            app_id = "client_tara_060315", 
+            auth_code = '20221011TARA0001',
+        }
+
+server.pass = server.pass or config.pass[server.user]
+
+if not server.pass then 
+    io.write("user: ", server.user, "\n")
+    io.write("password: ")
+    server.pass = io.read("*line")
+end
+
+-- server.pass = assert(server.pass or config.pass)
 
 local trader = ctp.new_trader(server)
     :cond( service.get_cond() )
@@ -103,6 +120,12 @@ function S.query_account()
     print("query_account, rst", inspect(rst))
     print("query_account, avail", rst[1].field.Available)
     return rst[1].field.Available
+end
+
+function S.query_position()
+    local T = wait_trader_request(trader:query_position())
+    print("positions", inspect(T)) 
+    return T
 end
 
 function S.query_instrument(exchange_id)

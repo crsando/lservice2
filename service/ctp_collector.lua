@@ -14,7 +14,9 @@ local ffi = ctp.ffi
 
 ctp.log_set_level("LOG_DEBUG")
 
-local server = config.server or ctp.servers.md["openctp"]
+-- local server = ctp.servers.md["openctp"]
+local server = ctp.servers.md["gtja-1"]
+
 print("collector server", inspect(server))
 
 print("service cond", service.get_cond())

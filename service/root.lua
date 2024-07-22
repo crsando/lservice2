@@ -24,8 +24,8 @@ end
 local function boot()
     -- local id1 = service.spawn { source = "@service/echo.lua", config = {} }
     -- local id2 = service.spawn { source = "@service/user.lua", config = {} }
-    local collector_id = service.spawn { source = "@service/ctp_collector.lua", config = {} }
-    local trader_id = service.spawn { source = "@service/ctp_trader.lua", config = {} }
+    -- local collector_id = service.spawn { source = "@service/ctp_collector.lua", config = {} }
+    local trader_id = service.spawn { source = "@service/ctp_trader.lua", config = { pass = service.config.pass } }
 
     -- print(id1, id2, trader_id)
 
@@ -35,27 +35,30 @@ local function boot()
     -- local rst = service.call(id2, "ping", id1)
     -- print("boot, recv response", rst)
 
-    local rst = service.call(trader_id, "ping")
-    print("ping result",rst)
+    -- local rst = service.call(trader_id, "ping")
+    -- print("ping result",rst)
 
-    local rst = service.call(trader_id, "start")
-    assert(rst == true)
-
-    local rst = service.call(trader_id, "query_instrument")
-    local sub_lst = filter_instruments(slice(rst, "InstrumentID"))
-    print(inspect(sub_lst))
-
-    --
-    local symbols = { "IF2409" }
-    local rst = assert(service.call(collector_id, "start", symbols))
-
-    -- local rst = service.call(trader_id, "query_account")
-    -- print("boot, recv response from trader", inspect(rst))
+    -- local rst = service.call(trader_id, "start")
+    -- assert(rst == true)
 
     -- local rst = service.call(trader_id, "query_instrument")
-    -- print("boot, recv response from trader", inspect(rst))
+    -- local sub_lst = filter_instruments(slice(rst, "InstrumentID"))
+    -- print(inspect(sub_lst))
 
-     service.call(trader_id, "quit")
+    -- --
+    -- local symbols = { "IF2409" }
+    -- local rst = assert(service.call(collector_id, "start", symbols))
+
+    local rst = service.call(trader_id, "query_account")
+    print("boot, recv response from trader", inspect(rst))
+
+    local rst = service.call(trader_id, "query_position")
+    print("boot, recv response from trader", inspect(rst))
+
+    -- -- local rst = service.call(trader_id, "query_instrument")
+    -- -- print("boot, recv response from trader", inspect(rst))
+
+    --  service.call(trader_id, "quit")
 end
 
 local S = {}

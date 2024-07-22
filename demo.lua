@@ -1,8 +1,12 @@
+package.path = package.path .. ";./?.lua;./?/init.lua"
+
 local inspect = require "inspect"
 local service = require "lservice2"
 local uv = require "luv"
 
-local root_id = service.spawn { source = "@service/root.lua", config = {} }
+local pass = require "pass"
+
+local root_id = service.spawn { source = "@service/root.lua", config = { pass = pass } }
 service.send(root_id, "boot")
 
 
