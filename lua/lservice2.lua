@@ -129,7 +129,7 @@ function service.input(s, config)
         service.config = {}
     end
 
-    return s
+    return service
     -- print("service.input end", s, config)
 end
 
