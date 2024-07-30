@@ -115,7 +115,7 @@ service_t * service_new(service_pool_t * pool, const char * name, const char * c
         s->pool = pool;
         s->id = pool->id ++; // assign service_id
 
-        log_info("service_new, assign id %d", s->id);
+        // log_info("service_new, assign id %d", s->id);
 
         if(s->id > MAX_SERVICES)
             err = 1; // too many services

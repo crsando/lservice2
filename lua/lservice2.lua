@@ -107,7 +107,7 @@ function service.get_pool(addr)
 end
 
 function service.get_addr(id)
-    print('get_addr', id, type(id))
+    -- print('get_addr', id, type(id))
     if not id then return service.self end -- if input is lightuserdata
     if type(id) ~= "number" then return id end
     local rst = service._get_addr(service.self, id)
@@ -123,7 +123,7 @@ function service.input(s, config)
         service.config = service.unpack_remove(config)
         -- print("service", service.get_id(), "with config", inspect(service.config) )
     else 
-        print("No input, running in standalone mode")
+        -- print("No input, running in standalone mode")
         service.self = nil
         service.pool = nil
         service.config = {}
@@ -307,7 +307,7 @@ function service.dispatch(request_handler)
             -- print("suspend", inspect(session_coroutine_suspend_lookup))
             local co = session_coroutine_suspend_lookup[session]
             if co == nil then
-                print("Unknown response session : ", session)
+                -- print("Unknown response session : ", session)
                 service.remove(msg, sz)
                 -- not implemented yet
                 -- service.quit()
