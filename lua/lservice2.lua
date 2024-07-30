@@ -128,6 +128,8 @@ function service.input(s, config)
         service.pool = nil
         service.config = {}
     end
+
+    return s
     -- print("service.input end", s, config)
 end
 
