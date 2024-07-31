@@ -303,11 +303,13 @@ function service.dispatch(request_handler)
             local co = new_session(function (type, msg, sz)
                     request(service.unpack_remove(msg, sz))
                 end, from, session)
+            -- print("session start", session, co)
             resume_session(co, type, msg, sz)
         -- on response, resume the previous session
         elseif session then
             -- print("suspend", inspect(session_coroutine_suspend_lookup))
             local co = session_coroutine_suspend_lookup[session]
+            -- print("resume", session, co)
             if co == nil then
                 -- print("Unknown response session : ", session)
                 service.remove(msg, sz)
