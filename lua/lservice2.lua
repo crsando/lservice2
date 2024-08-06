@@ -322,9 +322,11 @@ function service.dispatch(request_handler)
         else
             -- on idle, do nothing here
             -- print("on_idle")
-            if service.on_idle then 
-                service.on_idle() -- attention, this is not a coroutine
-            end
+        end
+
+        -- if on_idle is registered, run here
+        if (not quit) and (service.on_idle) then 
+            service.on_idle() -- attention, this is not a coroutine
         end
 
         -- dispatch_wakeup()
