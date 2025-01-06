@@ -1,7 +1,7 @@
 CFLAGS=-g -Wall
 # CFLAGS+=-DDEBUGLOG
 
-PREFIX=/usr/local/
+PREFIX=/usr/local
 
 # LUAINC?=-I/usr/local/include
 LUAINC?=-I/usr/local/include/luajit-2.1
